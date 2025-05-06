@@ -6,7 +6,7 @@ import numpy as np
 import random
 from collections import deque
 
-from networks.q_network import QNetwork
+from networks.q_network_base import QNetwork
 from utils.replay_buffer import ReplayBuffer
 import utils.config as config
 

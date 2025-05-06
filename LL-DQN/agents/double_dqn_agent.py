@@ -4,7 +4,7 @@ import torch.optim as optim
 import numpy as np
 import random
 
-from q_networks.q_network import QNetwork
+from networks.q_network import QNetwork
 from utils.replay_buffer import ReplayBuffer
 import utils.config as config
 
@@ -78,69 +78,36 @@ class DoubleDQNAgent:
         else:
             return random.choice(np.arange(self.action_dim))
 
-  def learn_from_experience(self, experiences, discount_factor: float):
-    states, actions, rewards, next_states, dones = experiences
-
-    # Double DQN: Use online network to SELECT actions
-    self.online_q_network.eval()
-    with torch.no_grad():
-        online_next_q_values = self.online_q_network(next_states)
-        best_actions = online_next_q_values.argmax(dim=1, keepdim=True)
-    self.online_q_network.train()
+    def learn_from_experience(self, experiences, discount_factor: float):
     
-    # Use the target network to EVALUATE these actions
-    next_q_values = self.target_q_network(next_states).gather(1, best_actions)
-    
-    # Compute target Q-values
-    target_q_values = rewards + (discount_factor * next_q_values * (1 - dones))
-
-    # Get expected Q-values from the online model
-    predicted_q_values = self.online_q_network(states).gather(1, actions)
-
-    # Compute loss and update network
-    loss = F.mse_loss(predicted_q_values, target_q_values)
-    self.optimizer.zero_grad()
-    loss.backward()
-    # Add gradient clipping
-    torch.nn.utils.clip_grad_norm_(self.online_q_network.parameters(), max_norm=1.0)
-    self.optimizer.step()
-
-    # Soft update the target network parameters
-    self.soft_update_networks(self.online_q_network, self.target_q_network, config.TAU)        """
-        Learn from a batch of experiences sampled from replay buffer.
-        Double DQN uses the online network to select actions and the target network to evaluate them.
-
-        Args:
-            experiences (tuple): Tuple of (states, actions, rewards, next_states, dones)
-            discount_factor (float): Gamma for future reward discounting
-        """
         states, actions, rewards, next_states, dones = experiences
 
         # Double DQN: Use online network to SELECT actions
         self.online_q_network.eval()
         with torch.no_grad():
-            # Get the indices of the max Q values from online network
             online_next_q_values = self.online_q_network(next_states)
-            best_actions = online_next_q_values.argmax(dim=1, keepdim=True)
+        best_actions = online_next_q_values.argmax(dim=1, keepdim=True)
         self.online_q_network.train()
-        
+    
         # Use the target network to EVALUATE these actions
         next_q_values = self.target_q_network(next_states).gather(1, best_actions)
-        
+    
         # Compute target Q-values
         target_q_values = rewards + (discount_factor * next_q_values * (1 - dones))
 
-        # Get expected Q-values from the online model
+            # Get expected Q-values from the online model
         predicted_q_values = self.online_q_network(states).gather(1, actions)
 
         # Compute loss and update network
         loss = F.mse_loss(predicted_q_values, target_q_values)
         self.optimizer.zero_grad()
         loss.backward()
+        # Add gradient clipping
+        torch.nn.utils.clip_grad_norm_(self.online_q_network.parameters(), max_norm=1.0)
         self.optimizer.step()
 
         # Soft update the target network parameters
-        self.soft_update_networks(self.online_q_network, self.target_q_network, config.TAU)
+        self.soft_update_networks(self.online_q_network, self.target_q_network, config.TAU)        
 
     def soft_update_networks(self, source_model: QNetwork, target_model: QNetwork, tau: float):
         """
