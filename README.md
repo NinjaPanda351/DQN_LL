@@ -15,3 +15,6 @@ Jayden Fausto - Created this repo and wrote the original implementation of the D
 Huy Huynh - Wrote the implementation of the Dueling DQN.
 Amanda - Did evaluation and analysis of the compared implementations.
 Caleb - Wrote the report.pdf for this project as well as the readme you are reading right now!
+
+## Extension Used
+We decided to use the Dueling Deep Q-Network Extension.
